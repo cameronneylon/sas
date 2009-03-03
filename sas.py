@@ -1,4 +1,4 @@
-import numpy
+from numpy import *
 import unittest
 import scipy.optimize as opt
 
@@ -85,6 +85,41 @@ class SasData(object):
         for j in range(len(self)):
             out.i[j] = self.i[j] * other
 	return out
+#definition of the Guinier model for a sphere with a flat background
+def guinier(q,param):
+    """Function that returns a Guinier model
+
+    The parameter set list should contain i0, Rg, and background in that
+    order. There is currently no option to hold any parameter.
+    """
+
+    assert len(param) == 3, 'Guinier fit requires three parameters'
+    assert len(q) != 0, 'No Q values to evaluate'
+      
+    return param[0]*exp((-1/3)*(param[1]**2)*(q**2)) + param[2]
+
+#calculate the residuals for a fit
+def guinier_residuals(param, i, q):
+
+    err = i-guinier(q, param)
+    return err
+
+#Least squares fitting routine for Guinier
+def fit_guinier(data):
+    """Function for calling to get a Guinier fit to a dataset
+
+    This currently takes a dataset and sets some plausible initial values
+    for a Guinier fit before calling guinier_residuals using leastsq.
+    """
+
+    assert isinstance(data, SasData) 
+
+    param_0 = [1.,1.,0.] # Set reasonable initial values for Guinier fit
+           
+    least_squares_fit = opt.leastsq(
+            guinier_residuals, param_0, args=(data.i, data.q))
+
+    return least_squares_fit
 
 class TestSasData(unittest.TestCase):
 
@@ -127,6 +162,7 @@ class TestSasData(unittest.TestCase):
 	self.assertTrue(len(test_data) == 0)
 
     def test_add(self):    
+
         test_add = SasData(self.zero_to_nine, self.nine_to_zero)
 	test_add = self.test_data_ranges + self.test_data_ranges
 	self.assertEqual(self.eighteen_to_zero, test_add.i)
@@ -134,10 +170,6 @@ class TestSasData(unittest.TestCase):
 
         test_add = SasData(self.zero_to_nine, self.nine_to_zero)
 	test_add = self.test_data_ranges + 4
-
-
-
-
 	self.assertEqual(self.thirteen_to_four, test_add.i)
 	self.assertEqual(self.zero_to_nine, test_add.q)
 
@@ -162,29 +194,42 @@ class TestSasData(unittest.TestCase):
         self.assertEqual(self.zero_to_nine, test_mul.q)
 
 
-
-
 class TestAnalysis(unittest.TestCase):
 
     def test_guinier(self):
-        test_data = SasData((numpy.arange(0,3,0.001)), 
-                (numpy.arange(4,1,-0.001)))
+        test_data = SasData((arange(0,3,0.001)), 
+                (arange(4,1,-0.001)))
 
-        # testing with pre-set parameter values
-
+        test_params = [5., 20., 2.]
         test_guinier = []
-        test_guinier = guinier(test_data.q)
+
+        # use guinier to make list to test
+        test_guinier = guinier(test_data.q, test_params)
+
+        # test that the lists are all the right length
         self.assertEqual(len(test_guinier), len(test_data))
+
+        # test that guinier is returning the right numbers at extremes
         self.assertEqual(test_guinier[0], 7)
         self.assertEqual(test_guinier[-1], 2)
 
-        self.assertRaises(AssertionError, guinier, [])
+        self.assertRaises(AssertionError, guinier, test_data.q, [])
+        self.assertRaises(AssertionError, guinier, [], test_params)
+
+        # now test the residuals function
+        test_zeros = [0] * 3000
+        test_residuals = guinier_residuals(
+                        test_params, test_guinier, test_data.q)
+        self.assertEqual(test_residuals[25], test_zeros[25])
+
+        test_residuals = []
+        test_residuals = guinier_residuals(
+                        test_params, test_zeros, test_data.q)
+        self.assertEqual(test_residuals[46], (-1*(test_guinier[46])))
+
 
 
 if __name__ == '__main__':
-    i0 = ModelParameter(5)
-    Rg = ModelParameter(50)
-    background = ModelParameter(2)
     unittest.main()
 
 
