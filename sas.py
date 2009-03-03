@@ -104,7 +104,7 @@ def guinier_residuals(param, i, q):
     err = i-guinier(q, param)
     return err
 
-#Least squares fitting routine for Guinier
+
 def fit_guinier(data):
     """Function for calling to get a Guinier fit to a dataset
 
@@ -200,7 +200,10 @@ class TestAnalysis(unittest.TestCase):
         test_data = SasData((arange(0,3,0.001)), 
                 (arange(4,1,-0.001)))
 
-        test_params = [5., 20., 2.]
+        i0 = 5.
+        Rg= 20.
+        background = 2.
+        test_params = [i0, Rg, background]
         test_guinier = []
 
         # use guinier to make list to test
@@ -210,8 +213,8 @@ class TestAnalysis(unittest.TestCase):
         self.assertEqual(len(test_guinier), len(test_data))
 
         # test that guinier is returning the right numbers at extremes
-        self.assertEqual(test_guinier[0], 7)
-        self.assertEqual(test_guinier[-1], 2)
+        self.assertEqual(test_guinier[0], (i0+background))
+        self.assertEqual(test_guinier[-1], background)
 
         self.assertRaises(AssertionError, guinier, test_data.q, [])
         self.assertRaises(AssertionError, guinier, [], test_params)
@@ -226,6 +229,14 @@ class TestAnalysis(unittest.TestCase):
         test_residuals = guinier_residuals(
                         test_params, test_zeros, test_data.q)
         self.assertEqual(test_residuals[46], (-1*(test_guinier[46])))
+
+        # testing the fitting function to some faked data
+        test_fit = SasData(test_data.q, test_guinier)
+
+        test_outs = fit_guinier(test_fit)
+        self.assertEqual(test_outs[0][0],i0)
+        self.assertEqual(test_outs[0][1],Rg)
+        self.assertEqual(test_outs[0][2], background)
 
 
 
