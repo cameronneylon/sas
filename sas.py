@@ -223,12 +223,12 @@ class TestAnalysis(unittest.TestCase):
         test_zeros = [0] * 3000
         test_residuals = guinier_residuals(
                         test_params, test_guinier, test_data.q)
-        self.assertEqual(test_residuals[25], test_zeros[25])
+        self.assertTrue(allclose(test_residuals, test_zeros))
 
         test_residuals = []
         test_residuals = guinier_residuals(
                         test_params, test_zeros, test_data.q)
-        self.assertEqual(test_residuals[46], (-1*(test_guinier[46])))
+        self.assertTrue(allclose(test_residuals, (-(test_guinier))))
 
         # testing the fitting function to some faked data
         test_fit = SasData(test_data.q, test_guinier)
