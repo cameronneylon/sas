@@ -4,7 +4,6 @@
 from scipy import *
 from scipy.optimize import *
 from scipy.io import read_array
-import unittest
 
 #definitions for specific models   
 
@@ -38,11 +37,3 @@ def fit_guinier(data):
     least_squares_fit = leastsq(guinier_residuals, param_0, args=(i, q))
     return least_squares_fit
 
-class TestFit(unittest.TestCase):
-
-    def test_guinier(self):
-        q = [0.0, 0.1, 0.2, 0.3, 0.4, 0.5]
-        parameters = [10.0, 100.0, 0.0]
-        test = guinier(q, parameters)
-
-        self.assertEqual(len(test), len(q))

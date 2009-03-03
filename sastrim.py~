@@ -1,0 +1,28 @@
+# sastrim
+# routines for trimming and processing scattering curves
+        
+import numpy as np
+
+def mask_data(data_to_mask, mask):
+    mask_2d = np.array([mask],[mask])
+    return extract(mask_2d, data_to_mask)
+
+
+def generate_mask(data, mask_ranges):
+    q_mask = data[:,0]
+    mask = q_mask[:] # make a slice copy of q list because we will change it    
+
+    i=0
+    for (low, high) in mask_ranges:
+        while q_mask[i] >= low and q_mask[i] <= high and i <= len(q_mask):
+            mask[i] = 0
+	    i += 1
+
+	mask[i:-1] = 1
+
+    return mask
+
+
+
+
+    

@@ -3,7 +3,7 @@
 
 from numpy import loadtxt
 
-def loadi22(file):        
+Def loadi22(file):        
     return loadtxt(file, skiprows=3)
 
 

@@ -1,4 +1,4 @@
-import numpy
+from numpy import loadtxt
 import unittest
 import scipy.optimize as opt
 
@@ -20,8 +20,8 @@ class SasData(object):
         including the units of Q in the root object
         """
 
-        assert type(q_vals) == list or type(q_vals) == ndarray
-        assert type(i_vals) == list or type(i_vals) == ndarray
+        assert type(q_vals) == list
+        assert type(i_vals) == list
         assert len(q_vals) == len(i_vals), 'q and i not the same length'
         self.q = q_vals
         self.i = i_vals
@@ -86,6 +86,50 @@ class SasData(object):
             out.i[j] = self.i[j] * other
 	return out
 
+def guinier(q, param):
+    """Returns the intensities according to Guinier model for a sphere
+
+    Takes a q vector and three parameters (I(0), Rg and background
+    in param[0], param[1], and param[2] respectively) and returns 
+    calculated values of I for each value of Q. Requires a simple list
+    of q values as an argument. Requires the correct number of 
+    parameters to be passed to it at the moment.
+    """
+
+    assert len(param) == 3, 'Guinier requires three parameters'
+    assert len(q) <> 0, 'Zero length q vector'
+
+    return param[0]*exp((-1/3)*(param[1]**2)*(q**2)) + param[2]
+
+
+def guinier_residuals(param, q, i):
+    """Routine for Guinier residual calculation.
+
+    """
+
+    assert type(q) is list, 'Need Q values to calculate residuals'
+    assert type(i) is list, 'Need I values to calculate residuals'
+    assert len(i) == len(q), 'Q and I not the same length?'
+    assert len(q) > 0, 'Data seems to have zero length'
+    assert type(param) is list, 'Need a list of parameters'
+    err = i - guinier(q, param)
+
+    return err
+
+def fit_model(data, model):
+    """Generic fitting routine for SasData.
+
+    Currently limited to Guinier models because that is the only
+    model implemented at the moment.
+    """
+
+    assert isinstance(data, SasData)
+    param_0 = array([1,1,0]) # some reasonable initial values for Guinier
+
+    least_square_fit = opt.leastsq(
+        guinier_residuals, param_0, args=(data.q, data.i))
+
+
 class TestSasData(unittest.TestCase):
 
     def setUp(self):
@@ -134,10 +178,6 @@ class TestSasData(unittest.TestCase):
 
         test_add = SasData(self.zero_to_nine, self.nine_to_zero)
 	test_add = self.test_data_ranges + 4
-
-
-
-
 	self.assertEqual(self.thirteen_to_four, test_add.i)
 	self.assertEqual(self.zero_to_nine, test_add.q)
 
@@ -161,30 +201,9 @@ class TestSasData(unittest.TestCase):
         self.assertEqual(self.test_floats, test_mul.i)
         self.assertEqual(self.zero_to_nine, test_mul.q)
 
-
-
-
-class TestAnalysis(unittest.TestCase):
-
-    def test_guinier(self):
-        test_data = SasData((numpy.arange(0,3,0.001)), 
-                (numpy.arange(4,1,-0.001)))
-
-        # testing with pre-set parameter values
-
-        test_guinier = []
-        test_guinier = guinier(test_data.q)
-        self.assertEqual(len(test_guinier), len(test_data))
-        self.assertEqual(test_guinier[0], 7)
-        self.assertEqual(test_guinier[-1], 2)
-
-        self.assertRaises(AssertionError, guinier, [])
-
+        
 
 if __name__ == '__main__':
-    i0 = ModelParameter(5)
-    Rg = ModelParameter(50)
-    background = ModelParameter(2)
     unittest.main()
 
 

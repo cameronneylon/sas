@@ -1,10 +1,10 @@
 # sasio
 # routines for loading specific data types
 
-from numpy import loadtxt
+from scipy.io import read_array
 
 def loadi22(file):        
-    return loadtxt(file, skiprows=3)
+    return read_array(file, lines=(3,-1))
 
 
     

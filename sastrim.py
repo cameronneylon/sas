@@ -1,52 +1,36 @@
 # sastrim
 # routines for trimming and processing scattering curves
-
-from numpy import *
+        
+import numpy as np
+import copy as cp
 
 def mask_data(data_to_mask, mask):
-        """Take an input Q-I data array and filter out points defined by mask
+    q = data_to_mask[:,0]
+    i = data_to_mask[:,1]
 
-        Takes a 2d Q-I array and generates a new array containing only
-        the points defined by non-zero values in the array mask. Mask
-        is a 1d array which is converted internally to a 2d array with
-        both columns the same. The numpy routine extract is then used
-        to generate a 2d array with the zero values in mask removed.
-        """
+    q_masked = np.extract(mask, q)
+    i_masked = np.extract(mask, i)
 
-    mask_2d = [mask[:], mask[:]]
-    return extract(mask_2d, data_to_mask)
+    masked_data = np.column_stack((q_masked,i_masked))
 
-def generate_mask(data, mask_ranges)
-        """"Generates a 1d mask of len(data) from values in mask_range
+    return masked_data
 
-        Takes the values in mask_range which contains values in Q to 
-        remove from the dataset in the form of a 2xn array. Iterates 
-        along the data array determining whether the Q values lie 
-        within the range(s) to be masked.
-        """
 
-    q_mask = data[:,0]
-    mask = q_mask[:] # make a slice copy of q list because we will change it
-    
-    n = 0
-    for a in len(q_mask):
-        if q_mask[a] > mask_ranges[n,0] and q_mask[a] < mask_ranges[n,1]:
-            mask[a] = 0
-               
-        if q_mask[a] => mask_ranges[n,1]:
-            n = n + 1
-            
-            if n > (len(mask_ranges) - 1) break
-            
-            if q_mask[a] >mask_ranges[n,0] and q_mask[a] < mask_ranges[n,1]:    
-                mask[a] = 0 
-                
+def generate_mask(data_to_mask, mask_ranges):
+    q_mask = data_to_mask[:,0]
+    mask = cp.deepcopy(q_mask) # copy the q list because we will change it    
+
+    for i in range(0,len(mask)):
+        for low, high in mask_ranges:
+            if q_mask[i] >= low and q_mask[i] <= high:
+                mask[i] = 0
+                break
             else:
-                 mask[a] = 1
-                   
-        else mask[a] = 1
+                mask[i] = 1 
 
     return mask
+
+
 
 
     
