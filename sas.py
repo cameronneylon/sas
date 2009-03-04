@@ -1,6 +1,7 @@
 from numpy import *
 import unittest
 import scipy.optimize as opt
+import copy as cp
 
 class SasData(object):
     """A data object for holding 1-d Q versus I SAS data.
@@ -85,7 +86,69 @@ class SasData(object):
         for j in range(len(self)):
             out.i[j] = self.i[j] * other
 	return out
-#definition of the Guinier model for a sphere with a flat background
+
+    #########
+    #
+    # SasTrim Routines for Trimming and Masking SasData
+    #
+    #########
+
+    def make_mask(data_to_mask, mask_ranges):
+        """Generates a mask list of 0's and 1's to remove data in mask_ranges
+
+        Takes a SasData object and creates a list with a 1 to 1 mapping with
+        SasData.q containing only zeros and ones based on the q-values in
+        mask_ranges. Mask_ranges takes the form of a list of length N of
+        lists of length two containing data to exclude. May expand in the future
+        to allow both positive and negative mask generation.
+        """
+
+    # need to make an assertion that mask ranges is a N x 2 set of lists
+    # not immediately sure how to do this at the moment
+
+    # make a copy of the q list because we are going to change it
+        mask = cp.deepcopy(data_to_mask.q)
+
+        for j in range(len(mask)):
+
+            #for each pair of values in mask_ranges
+            for low, high in mask_ranges
+
+                # check whether q values are within mask_ranges
+                if mask[j] >= low and q_mask[j] <= high:
+                    mask[j] = 0
+                    break
+                else:
+                    mask[j] = 1
+
+        self.mask_list = mask
+
+    def mask(self):
+        """Applies a pre-calculated mask to a SasData object.
+
+        Takes the pre-calculated mask from make_mask and creates a new
+        SasData object with the masked data points (those corresponding
+        to zeros in the mask) removed. The new object is then placed in
+        self.masked. In principle this should allow nested masking operations.
+        Whether this is a good idea remains to be seen.
+        """
+
+        assert type(self.mask) is list
+        assert len(self.mask) != 0
+
+        q_masked = extract(self.mask, self.q)
+        i_masked = extract(self.mask, self.i)
+
+        self.masked = SasData(q_masked, i_masked)
+        return self.masked
+
+
+###################################################
+#
+# Definition of data fitting models
+#
+###################################################
+
 def guinier(q,param):
     """Function that returns a Guinier model
 
@@ -120,6 +183,12 @@ def fit_guinier(data):
             guinier_residuals, param_0, args=(data.i, data.q))
 
     return least_squares_fit
+
+########################################
+#
+# Unit tests
+#
+########################################
 
 class TestSasData(unittest.TestCase):
 
