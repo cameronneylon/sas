@@ -26,6 +26,7 @@ class SasData(object):
         assert len(q_vals) == len(i_vals), 'q and i not the same length'
         self.q = q_vals
         self.i = i_vals
+        self.masked = None
 
 
     def __len__(self):
@@ -93,7 +94,7 @@ class SasData(object):
     #
     #########
 
-    def make_mask(data_to_mask, mask_ranges):
+    def make_mask(self, mask_ranges):
         """Generates a mask list of 0's and 1's to remove data in mask_ranges
 
         Takes a SasData object and creates a list with a 1 to 1 mapping with
@@ -107,15 +108,14 @@ class SasData(object):
     # not immediately sure how to do this at the moment
 
     # make a copy of the q list because we are going to change it
-        mask = cp.deepcopy(data_to_mask.q)
-
-        for j in range(len(mask)):
+        mask = cp.deepcopy(self.q)
+        
+        for j in range(0, len(mask)):
 
             #for each pair of values in mask_ranges
-            for low, high in mask_ranges
-
+            for low, high in mask_ranges:
                 # check whether q values are within mask_ranges
-                if mask[j] >= low and q_mask[j] <= high:
+                if self.q[j] >= low and self.q[j] <= high:
                     mask[j] = 0
                     break
                 else:
@@ -133,8 +133,11 @@ class SasData(object):
         Whether this is a good idea remains to be seen.
         """
 
-        assert type(self.mask) is list
-        assert len(self.mask) != 0
+        assert type(self.mask_list) is list, 'Mask needs to be a list'
+        assert self.mask_list != None, 'Mask appears not to have been setup'
+        assert len(self.mask_list) != 0, 'Mask is zero length?'
+        assert len(self.mask_list
+                     ) == len(self.q), 'Mask not same length as data?'
 
         q_masked = extract(self.mask, self.q)
         i_masked = extract(self.mask, self.i)
@@ -261,6 +264,39 @@ class TestSasData(unittest.TestCase):
         test_mul = self.test_data_ranges * 0.25
         self.assertEqual(self.test_floats, test_mul.i)
         self.assertEqual(self.zero_to_nine, test_mul.q)
+
+    def test_masking(self):
+        """Tests for make_mask and mask."""
+
+        test_mask_1 = [[0.,0.01],[0.05,0.1],[1,2.]]
+        test_mask_2 = [[-2,-1],[10,20]]
+
+        #self.assertRaises(make_mask(test_data_ranges, []))
+        test_data = SasData((arange(0,3,0.001)), 
+                (arange(4,1, -0.001)))
+
+        test_data.make_mask(test_mask_1)
+        self.assertTrue(test_data.mask_list != None)
+        self.assertEqual(len(test_data.q), len(test_data.mask_list))
+        self.assertEqual(test_data.mask_list[0], 0)
+        print test_data.mask_list
+        self.assertEqual(test_data.mask_list[-1], 1)
+
+        test_data.make_mask(test_mask_2)
+        self.assertTrue(test_data.mask_list != None)
+        self.assertEqual(len(test_data.q), len(test_data.mask_list))
+        self.assertEqual(test_data.mask_list[0], 1)
+        self.assertEqual(test_data.mask_list[-1], 1)
+
+        test_data.mask_list = None
+        self.assertRaises(AssertionError, test_data.mask)
+        test_data.mask_list = 'string'
+        self.assertRaises(AssertionError, test_data.mask,)
+        test_data.mask_list = []
+        self.assertRaises(AssertionError, test_data.mask,)
+
+        test_data.make_mask(test_mask_1)
+        test_data.mask
 
 
 class TestAnalysis(unittest.TestCase):
