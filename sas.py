@@ -2,6 +2,10 @@ from numpy import *
 import unittest
 import scipy.optimize as opt
 import copy as cp
+import matplotlib.pyplot as plt
+from matplotlib import scale as mscale
+from matplotlib import transforms as mtransforms
+from pylab import *
 
 class SasData(object):
     """A data object for holding 1-d Q versus I SAS data.
@@ -88,11 +92,12 @@ class SasData(object):
             out.i[j] = self.i[j] * other
 	return out
 
-    #########
+
+    #################################################
     #
     # SasTrim Routines for Trimming and Masking SasData
     #
-    #########
+    #################################################
 
     def make_mask(self, mask_ranges):
         """Generates a mask list of 0's and 1's to remove data in mask_ranges
@@ -145,6 +150,115 @@ class SasData(object):
         self.masked = SasData(q_masked, i_masked)
         return self.masked
 
+
+###################################################
+#
+# Definition of plotting routines
+#
+###################################################
+
+class SasPlot(object):
+    """Class for generating and handling data plots.
+
+    Uses the pylab module of matplotlib to generate and
+    manipulate plots and provide some easy routines for
+    modifying them, adding data, etc.
+    """
+
+    def __init__(self, data_to_plot=None, format='rO'):
+        """__init__ routine creates a plot with default features.
+
+        """
+
+        plt.plot(data.q, data.i, format)
+        plt.ylabel('I')
+        plt.xlabel('Q')
+        # plt.title(name of data_to_plot) - how do I do this?
+        plt.show()
+
+        # setup a list for holding the data for this plot
+        # self.data.append(name of data_to_plot)
+
+        # a place to hold the figure and plot number
+        self.figure = plt.gcf()
+        self.axes = plt.gca()
+
+    def guinier(self):
+        """Routine to convert to a Guinier plot.
+
+        Converts plot to show data on the coordinates of ln(I)
+        versus Q^2. First we need to get the correct figure
+        number and then change the axes. The actual data file
+        remains unchanged.
+        """
+
+        ax = self.axes
+        ax.set_yscale('log', basey=e)
+        ax.set_xscale('q_squared')
+
+
+class SquaredScale(mscale.ScaleBase):
+    """ScaleBase class for generating x axis of Guinier plots.
+
+    Uses the built in scalebase to generate a transformed axis type
+    called SquaredScale which can be called using ax.set_xscale('q_squared').
+    Currently uses the default ticker and scale setup which will need
+    to be changed in the future.
+
+    The class requires the import of pylab (AutoLocator, ScalarFormatter
+    NullLocator and NullFormatter) matplotlib.transforms (imported as
+    mtransforms, required for the mtransforms.Transform class) and
+    matplotlib.scale (imported as mscale, required for the mscale.ScaleBase
+    class for inheritance of the scale).
+    """
+
+    name = 'q_squared'
+
+    def __init__(self, axis, **kwargs):
+        mscale.ScaleBase.__init__(self) # what does this do?
+
+
+    def set_default_locators_and_formatters(self, axis):
+        """
+        Set the locators and formatters to reasonable defaults for
+        scaling. Not really too sure what these do at the moment.
+        """
+        axis.set_major_locator(AutoLocator())
+        axis.set_major_formatter(ScalarFormatter())
+        axis.set_minor_locator(NullLocator())
+        axis.set_minor_formatter(NullFormatter())
+
+    class SquaredTransform(mtransforms.Transform):
+        input_dims = 1
+        output_dims = 1
+        is_separable = True
+
+        def transform(self, a): return a**2
+
+        def inverted(self):
+            return SquaredScale.InvertedSquaredTransform()
+
+    class InvertedSquaredTransform(mtransforms.Transform):
+        input_dims = 1
+        output_dims = 1
+        is_separable = True
+
+        def transform(self, a): return a**0.5
+
+        def inverted(self):
+            return SquaredScale.SquaredTransform()
+
+    def get_transform(self):
+        """Set the actual transform for the axis coordinates.
+
+        """
+        return self.SquaredTransform()
+
+mscale.register_scale(SquaredScale)
+
+        
+
+              
 
 ###################################################
 #
