@@ -153,6 +153,27 @@ class SasData(object):
         return self.masked
 
 
+##################################################
+#
+# Loaders for various SAS data formats to SasData objects
+#
+##################################################
+
+def loadi22(file):
+    """Loader for i22 two column data files.
+
+    i22 files currently have two columns with three lines of text
+    at the top. This just does a quick and dirty load of a the file
+    into a SasData object. Currently setup to be called in the form
+    data = loadi22('file')
+    """
+
+    data = np.loadtext(file, skiprows = 3)
+    data_q = data[:,0]
+    data_i = data[:,1]
+    return SasData(data_q, data_i)
+    
+
 ###################################################
 #
 # Definition of plotting routines
