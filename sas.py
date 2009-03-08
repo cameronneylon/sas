@@ -5,6 +5,8 @@ import copy as cp
 import matplotlib.pyplot as plt
 from matplotlib import scale as mscale
 from matplotlib import transforms as mtransforms
+import matplotlib.figure as fig
+import matplotlib.axes as maxes
 from pylab import *
 
 class SasData(object):
@@ -157,7 +159,7 @@ class SasData(object):
 #
 ###################################################
 
-class SasPlot(object):
+class SasPlot(fig.Figure):
     """Class for generating and handling data plots.
 
     Uses the pylab module of matplotlib to generate and
@@ -165,7 +167,7 @@ class SasPlot(object):
     modifying them, adding data, etc.
     """
 
-    def __init__(self, data_to_plot=None, format='rO'):
+    def __init__(self, data, format='ro'):
         """__init__ routine creates a plot with default features.
 
         """
@@ -174,7 +176,7 @@ class SasPlot(object):
         plt.ylabel('I')
         plt.xlabel('Q')
         # plt.title(name of data_to_plot) - how do I do this?
-        plt.show()
+        plt.draw()
 
         # setup a list for holding the data for this plot
         # self.data.append(name of data_to_plot)
@@ -182,19 +184,20 @@ class SasPlot(object):
         # a place to hold the figure and plot number
         self.figure = plt.gcf()
         self.axes = plt.gca()
+    
 
-    def guinier(self):
+    def guinier_plot(self):
         """Routine to convert to a Guinier plot.
 
         Converts plot to show data on the coordinates of ln(I)
         versus Q^2. First we need to get the correct figure
-        number and then change the axes. The actual data file
-        remains unchanged.
+        number and then change the axes. The routine sets the axes
+        to base e log and a squared scale on y and x axes respectively.
         """
 
-        ax = self.axes
-        ax.set_yscale('log', basey=e)
-        ax.set_xscale('q_squared')
+        self.axes.set_yscale('log', basey=e)
+        self.axes.set_xscale('q_squared')
+        plt.draw()
 
 
 class SquaredScale(mscale.ScaleBase):
