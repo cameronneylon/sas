@@ -168,10 +168,56 @@ def loadi22(file):
     data = loadi22('file')
     """
 
-    data = np.loadtext(file, skiprows = 3)
+    data = loadtxt(file, skiprows = 3)
     data_q = data[:,0]
     data_i = data[:,1]
     return SasData(data_q, data_i)
+
+import xml.etree.ElementTree as ET
+
+def loadsasxml(file):
+    """Loaded for SASxml 1.0 format data.
+
+    The loader uses xml.etree.ElementTree to parse the xml file and
+    then searches through the file to find the {cansas1d/1.0}Q and
+    {cansas1d/1,0}I tags and then extract the text attribute from each 
+    of these. The list is then converted from text to floats and the Q
+    and I lists passed to a new SasData object. Currently nothing else
+    from the sas xml folder is loaded.
+    """
+
+    # Check that file is a sasxml file
+    # assert (first line of file is what it should be) is True
+
+    # Parse the xml file and find the root element
+    tree = ET.parse('xmltest.xml')
+    elem = tree.getroot()
+
+    # return a list of all the <Q> tags and get the Q values
+    q_tags = elem.getiterator("{cansas1d/1.0}Q")
+
+    q_list = []
+
+    for elements in q_tags:
+        q_list.append(float(elements.text)) # need to convert text to float
+
+    # then do the same for the <I> tags and values
+    i_tags = elem.getiterator("{cansas1d/1.0}I")
+    i_list = []
+
+    for elements in i_tags:
+        i_list.append(float(elements.text))
+
+    # check everything is ok with q_list and i_list
+    assert len(q_list) == len(i_list), 'different number of q and i values?'
+    assert len(q_list) != 0, 'appear to be no q values'
+    assert len(i_list) != 0, 'appear to be no i values'
+    assert q_list[0] < q_list[-1], 'q values not in order?'
+
+    # generate and return a SasData object
+    return SasData(q_list, i_list)
+
+
     
 
 ###################################################
@@ -481,7 +527,36 @@ class TestAnalysis(unittest.TestCase):
         self.assertEqual(test_outs[0][1],Rg)
         self.assertEqual(test_outs[0][2], background)
 
+class TestLoaders(unittest.TestCase):
 
+    def test_i22_loader(self):
+        """Test for i22 file loader.
+
+        Requires the file data.DAT for the test at the moment. This
+        should be included in the git commit for the current branch.
+        """
+
+        test = loadi22('data.DAT')
+        self.assertTrue(isinstance(test, SasData))
+        self.assertEqual(len(test.q), len(test.i))
+
+        # need to write a test once the routine should catch
+        # an incorrect file type
+
+    def test_sasxml_loader(self):
+        """Test for sasxml loader.
+
+        Requires the file xmltest.xml at the moment. This should be
+        included in the git commit for the current branch. The test
+        suite and associated files will need cleaning up at some point.
+        """
+
+        test = loadsasxml('xmltest.xml')
+        self.assertTrue(isinstance(test, SasData))
+        self.assertEqual(len(test.q), len(test.i))
+
+        # need to write a test once the loader is set up to
+        # catch an incorrect file type
 
 if __name__ == '__main__':
     unittest.main()
