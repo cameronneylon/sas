@@ -10,7 +10,7 @@ import matplotlib.axes as maxes
 from pylab import *
 
 class SasData(object):
-    """A data object for holding 1-d Q versus I SAS data.
+    """Root class for data object for holding 1-d Q versus I SAS data.
 
     Class has a series of methods for initialising and
     doing basic operations on SAS data. The root class
@@ -32,7 +32,6 @@ class SasData(object):
         assert len(q_vals) == len(i_vals), 'q and i not the same length'
         self.q = q_vals
         self.i = i_vals
-        self.masked = None
 
 
     def __len__(self):
@@ -95,9 +94,26 @@ class SasData(object):
 	return out
 
 
+class ExpSasData(SasData):
+    """Derived class for experimental SAS data obects.
+
+    The ExpSasData class is derived from the SasDatq class. The ExpSasData
+    class adds support for masks over the data to remove parts of the
+    experimental pattern. The mask and the masked data can be stored with
+    the experimental data. 
+    """
+
+    def __init__(self, q, i):
+        """Initialization routine adds additional SasData object for the 
+        masked data at self.masked"""
+
+        SasData.__init__(self, q, i)
+        self.mask = []
+        self.masked = SasData([],[])
+
     #################################################
     #
-    # SasTrim Routines for Trimming and Masking SasData
+    # SasTrim Routines for Trimming and Masking ExpSasData
     #
     #################################################
 
@@ -128,7 +144,7 @@ class SasData(object):
                 else:
                     mask[j] = 1
 
-        self.mask_list = mask
+        self.mask = mask
 
     def mask(self):
         """Applies a pre-calculated mask to a SasData object.
@@ -149,8 +165,8 @@ class SasData(object):
         q_masked = extract(self.mask, self.q)
         i_masked = extract(self.mask, self.i)
 
-        self.masked = SasData(q_masked, i_masked)
-        return self.masked
+        self.masked.q =  SasData(q_masked, i_masked)
+        return masked
 
 
 ##################################################
@@ -171,7 +187,7 @@ def loadi22(file):
     data = loadtxt(file, skiprows = 3)
     data_q = data[:,0]
     data_i = data[:,1]
-    return SasData(data_q, data_i)
+    return ExpSasData(data_q, data_i)
 
 import xml.etree.ElementTree as ET
 
@@ -215,7 +231,7 @@ def loadsasxml(file):
     assert q_list[0] < q_list[-1], 'q values not in order?'
 
     # generate and return a SasData object
-    return SasData(q_list, i_list)
+    return ExpSasData(q_list, i_list)
 
 
     
@@ -313,7 +329,17 @@ class SquaredScale(mscale.ScaleBase):
         output_dims = 1
         is_separable = True
 
-        def transform(self, a): return a**0.5
+        def transform(self, a): 
+            
+            b = a[:]
+            for points in b:
+                if points > 0:
+                    b =  a**0.5
+                elif points < 0:
+                    b = -((-a)**0.5)
+                elif points == 0:
+                    b = 0
+            return b
 
         def inverted(self):
             return SquaredScale.SquaredTransform()
