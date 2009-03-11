@@ -146,7 +146,7 @@ class ExpSasData(SasData):
 
         self.mask = mask
 
-    def mask(self):
+    def apply_mask(self):
         """Applies a pre-calculated mask to a SasData object.
 
         Takes the pre-calculated mask from make_mask and creates a new
@@ -156,10 +156,10 @@ class ExpSasData(SasData):
         Whether this is a good idea remains to be seen.
         """
 
-        assert type(self.mask_list) is list, 'Mask needs to be a list'
-        assert self.mask_list != None, 'Mask appears not to have been setup'
-        assert len(self.mask_list) != 0, 'Mask is zero length?'
-        assert len(self.mask_list
+        assert type(self.mask) is list, 'Mask needs to be a list'
+        assert self.mask != None, 'Mask appears not to have been setup'
+        assert len(self.mask) != 0, 'Mask is zero length?'
+        assert len(self.mask
                      ) == len(self.q), 'Mask not same length as data?'
 
         q_masked = extract(self.mask, self.q)
@@ -482,28 +482,27 @@ class TestSasData(unittest.TestCase):
         test_mask_2 = [[-2,-1],[10,20]]
 
         #self.assertRaises(make_mask(test_data_ranges, []))
-        test_data = SasData((arange(0,3,0.001)), 
+        test_data = ExpSasData((arange(0,3,0.001)), 
                 (arange(4,1, -0.001)))
 
         test_data.make_mask(test_mask_1)
-        self.assertTrue(test_data.mask_list != None)
-        self.assertEqual(len(test_data.q), len(test_data.mask_list))
-        self.assertEqual(test_data.mask_list[0], 0)
-        print test_data.mask_list
-        self.assertEqual(test_data.mask_list[-1], 1)
+        self.assertTrue(test_data.mask != None)
+        self.assertEqual(len(test_data.q), len(test_data.mask))
+        self.assertEqual(test_data.mask[0], 0)
+        self.assertEqual(test_data.mask[-1], 1)
 
         test_data.make_mask(test_mask_2)
-        self.assertTrue(test_data.mask_list != None)
-        self.assertEqual(len(test_data.q), len(test_data.mask_list))
-        self.assertEqual(test_data.mask_list[0], 1)
-        self.assertEqual(test_data.mask_list[-1], 1)
+        self.assertTrue(test_data.mask != None)
+        self.assertEqual(len(test_data.q), len(test_data.mask))
+        self.assertEqual(test_data.mask[0], 1)
+        self.assertEqual(test_data.mask[-1], 1)
 
-        test_data.mask_list = None
-        self.assertRaises(AssertionError, test_data.mask)
-        test_data.mask_list = 'string'
-        self.assertRaises(AssertionError, test_data.mask,)
-        test_data.mask_list = []
-        self.assertRaises(AssertionError, test_data.mask,)
+        test_data.mask = None
+        self.assertRaises(AssertionError, test_data.apply_mask)
+        test_data.mask = 'string'
+        self.assertRaises(AssertionError, test_data.apply_mask,)
+        test_data.mask = []
+        self.assertRaises(AssertionError, test_data.apply_mask,)
 
         test_data.make_mask(test_mask_1)
         test_data.mask
