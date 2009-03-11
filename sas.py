@@ -165,8 +165,8 @@ class ExpSasData(SasData):
         q_masked = extract(self.mask, self.q)
         i_masked = extract(self.mask, self.i)
 
-        self.masked.q =  SasData(q_masked, i_masked)
-        return masked
+        self.masked =  SasData(q_masked, i_masked)
+        return self.masked
 
 
 ##################################################
@@ -255,7 +255,9 @@ class SasPlot(fig.Figure):
 
         """
 
-        plt.plot(data.q, data.i, format)
+        self.figure = plt.figure()
+        self.axes = self.figure.add_subplot(1,1,1)
+        self.axes.plot(data.q, data.i, format)
         plt.ylabel('I')
         plt.xlabel('Q')
         # plt.title(name of data_to_plot) - how do I do this?
@@ -264,9 +266,7 @@ class SasPlot(fig.Figure):
         # setup a list for holding the data for this plot
         # self.data.append(name of data_to_plot)
 
-        # a place to hold the figure and plot number
-        self.figure = plt.gcf()
-        self.axes = plt.gca()
+
     
 
     def guinier_plot(self):
