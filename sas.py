@@ -8,6 +8,7 @@ from matplotlib import transforms as mtransforms
 import matplotlib.figure as fig
 import matplotlib.axes as maxes
 from pylab import *
+import tkFileDialog as tkfd
 
 class SasData(object):
     """Root class for data object for holding 1-d Q versus I SAS data.
@@ -175,7 +176,37 @@ class ExpSasData(SasData):
 #
 ##################################################
 
-def loadi22(file):
+def load():
+    """A generic loader that will call specific loaders.
+
+    The function will call tkFileDialog.askopenfilename() to 
+    get a file and then will attempt to match it against known file
+    types and call the correct one.
+    """
+
+    # Use tkfd to open an OS specific file dialog and get the path to the file
+    path = tkfd.askopenfilename()
+
+    DLS_I22_recogniser = 'Created at DLS-I22'
+    sasxml_recogniser = 'cansas1d/1.0'
+
+    file = open(path, 'r').readlines()
+
+    for j in range(0,5):
+        if DLS_I22_recogniser in file[j]:
+            sas_data_object = load_two_column_data(path, 3)
+            break
+        elif sasxml_recogniser in file[j]:
+            sas_data_object = loadsasxml(path)
+            break
+
+        else:
+            pass
+
+    return sas_data_object
+    
+
+def load_two_column_data(file, rows_to_skip):
     """Loader for i22 two column data files.
 
     i22 files currently have two columns with three lines of text
@@ -184,7 +215,10 @@ def loadi22(file):
     data = loadi22('file')
     """
 
-    data = loadtxt(file, skiprows = 3)
+    data = loadtxt(file, skiprows = rows_to_skip)
+
+
+
     data_q = data[:,0]
     data_i = data[:,1]
     return ExpSasData(data_q, data_i)
@@ -313,6 +347,9 @@ class SquaredScale(mscale.ScaleBase):
         axis.set_major_formatter(ScalarFormatter())
         axis.set_minor_locator(NullLocator())
         axis.set_minor_formatter(NullFormatter())
+
+    def limit_range_for_scale(self, vmin, vmax, minpos):
+        return max(vmin, 0), min(vmax, 10)
 
     class SquaredTransform(mtransforms.Transform):
         input_dims = 1
