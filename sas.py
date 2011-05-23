@@ -203,16 +203,18 @@ def load():
         else:
             pass
 
+    sas_data_object = load_two_column_data(path,0)
+
     return sas_data_object
     
 
-def load_two_column_data(file, rows_to_skip):
+def load_two_column_data(file, rows_to_skip=0):
     """Loader for i22 two column data files.
 
     i22 files currently have two columns with three lines of text
     at the top. This just does a quick and dirty load of a the file
     into a SasData object. Currently setup to be called in the form
-    data = loadi22('file')
+    data = load_two_column_data('file')
     """
 
     data = loadtxt(file, skiprows = rows_to_skip)
@@ -335,7 +337,7 @@ class SquaredScale(mscale.ScaleBase):
     name = 'q_squared'
 
     def __init__(self, axis, **kwargs):
-        mscale.ScaleBase.__init__(self) # what does this do?
+        mscale.ScaleBase.__init__(self)
 
 
     def set_default_locators_and_formatters(self, axis):
@@ -349,7 +351,7 @@ class SquaredScale(mscale.ScaleBase):
         axis.set_minor_formatter(NullFormatter())
 
     def limit_range_for_scale(self, vmin, vmax, minpos):
-        return max(vmin, 0), min(vmax, 10)
+        return  0, vmax
 
     class SquaredTransform(mtransforms.Transform):
         input_dims = 1
@@ -366,17 +368,10 @@ class SquaredScale(mscale.ScaleBase):
         output_dims = 1
         is_separable = True
 
+
         def transform(self, a): 
-            
-            b = a[:]
-            for points in b:
-                if points > 0:
-                    b =  a**0.5
-                elif points < 0:
-                    b = -((-a)**0.5)
-                elif points == 0:
-                    b = 0
-            return b
+            return sqrt(a)    
+
 
         def inverted(self):
             return SquaredScale.SquaredTransform()
@@ -598,7 +593,7 @@ class TestLoaders(unittest.TestCase):
         should be included in the git commit for the current branch.
         """
 
-        test = loadi22('data.DAT')
+        test = load_two_column_data('data.DAT', 3)
         self.assertTrue(isinstance(test, SasData))
         self.assertEqual(len(test.q), len(test.i))
 
