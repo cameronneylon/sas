@@ -40,4 +40,4 @@ height = Parameter(5)
 def f(x): return mu() * exp((-1/3)*(sigma()**2)*(x**2)) + height()
 
 # fit! (given that data is an array with the data to fit)
-fit(f, [mu, sigma, height], data_x, data_y)
+fit(f, [mu, sigma, height], data_y, data_x)

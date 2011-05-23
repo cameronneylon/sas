@@ -1,24 +1,21 @@
-from numpy import *
-import sas
+from sas import *
+import matplotlib.pyplot as plt
 
-test = loadtxt('data.DAT', skiprows=3)
+test = loadsasxml('xmltest.xml')
 
-test_i = test[:,1]
-test_q = test[:,0]
+plot = SasPlot(test)
 
-i0 = sas.ModelParameter(10)
-Rg = sas.ModelParameter(5)
-background = sas.ModelParameter(0)
+ranges = [[0,0.03],[0.11,5]]
 
-params = [i0, Rg, background]
+test.make_mask(ranges)
 
-globalvars = globals()
-print globalvars.has_key(i0)
+test.apply_mask()
+print test.masked.q
 
-def guinier_test(q): return i0() * exp((-1/3)*(Rg()**2)*(q**2)) + background()
+plt.plot(test.masked.q, test.masked.i, '-')
+plt.draw()
 
-sas.fit(guinier_test, [i0, Rg, background], test_q, test_i)
-print i0(), Rg(), background()
+raw_input('waiting')
 
-sas.fit(sas.guinier, [i0, Rg, background], test_q, test_i)
-print i0(), Rg(), background()
+
+
